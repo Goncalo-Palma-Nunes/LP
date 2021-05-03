@@ -23,7 +23,7 @@ conteudo_espaco(espaco(_, Lista), Lista).
 %                   Combinacoes_soma(N, Els, Soma, Combs)
 % combinacoes_soma(N, Els, Soma, Combs), em que N eh um inteiro, Els eh
 % uma lista de inteiros, e Soma eh um inteiro, significa que Combs eh a
-% lista ordenada cujos elementos sao as combinacoes N a N, dos
+% lista ordenada cujos elementos sao as combinacoes N a N, dos
 % elementos de Els cuja soma e Soma.
 % -----------------------------------------------------------------------
 combinacoes_soma(N, Els, Soma, Combs) :-
@@ -36,7 +36,7 @@ combinacoes_soma(N, Els, Soma, Combs) :-
 %                  permutacoes_soma(N, Els, Soma, Perms)
 % permutacoes_soma(N, Els, Soma, Perms), em que N eh um inteiro, Els eh
 % uma lista de inteiros, e Soma eh um inteiro, significa que Perms eh a
-% lista ordenada cujos elementos sao as permutações das combinações N a
+% lista ordenada cujos elementos sao as permutações das combinações N a
 % N, dos elementos de Els cuja soma eh Soma.
 % -----------------------------------------------------------------------
 permutacoes_soma(N, Els, Soma, Perms) :-
@@ -83,9 +83,17 @@ espaco_fila_aux([P | R], Esp, H_V, Soma, Vars, Conjunto) :-
 % Caso terminal de espaco_fila_aux. Corresponde a variavel
 % Fila ser a lista vazia
 espaco_fila_aux([], Esp, _, Soma, Vars, Conjunto) :-
-     faz_espaco(Soma, Vars, Esp_Atual),
-     append(Conjunto, [Esp_Atual], Resultado),
+%     length(Vars, N),  % Verifica se tem variaveis
+%     N =\= 0,          % para criar o espaco
+%     faz_espaco(Soma, Vars, Esp_Atual),
+%     append(Conjunto, [Esp_Atual], Resultado),
+     ultimo_espaco(Vars, Soma, Esp_Atual),
+     append(Conjunto, Esp_Atual, Resultado),
      member(Esp, Resultado).
+
+% Se Vars estiver vazio
+%espaco_fila_aux([], _, _, _, _, _) :-
+%     fail.
 
 % Fila horizontal
 valor_soma(Lista, H_V, Soma) :-
@@ -106,3 +114,26 @@ primeiro_espaco(Conjunto) :-
 % Afirma que Conjunto eh uma lista
 primeiro_espaco(Conjunto) :-
      is_list(Conjunto).
+
+% Verifica ha um novo espaco para criar
+ultimo_espaco(Vars, Soma, [Esp_Atual]) :-
+     length(Vars, N),
+     N > 0,
+     faz_espaco(Soma, Vars, Esp_Atual).
+% Unifica o Espaco Atual com a lista vazia
+ultimo_espaco(Vars, _, []) :-
+     length(Vars, N),
+     N =:= 0.
+
+% -----------------------------------------------------------------------
+%                    espacos_fila(H_V, Fila, Espacos)
+% espacos_fila(H_V, Fila, Espacos), em que Fila eh uma fila (linha ou
+% coluna) de uma grelha e e H_V eh um dos atomos h ou v, significa que
+% Espacos eh a lista de todos os espaços de Fila, da esquerda para a
+% direita.
+% -----------------------------------------------------------------------
+espacos_fila(H_V, Fila, Espacos) :-
+     bagof(X, espaco_fila(Fila, X, H_V), Espacos), !.
+
+espacos_fila(_, _, Espacos) :-
+     Espacos = [].
