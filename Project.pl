@@ -1,8 +1,9 @@
-% Gonçalo Nunes 199229
+ Nunes 199229
 % Projeto de LP 2020/2021
 % Solucionador de Puzzles Kakuro
 
 :- [codigo_comum, puzzles_publicos].
+
 
 % -----------------------------------------------------------------------
 %                     Estrutura: espaco(Soma, Variaveis)
@@ -137,3 +138,38 @@ espacos_fila(H_V, Fila, Espacos) :-
 
 espacos_fila(_, _, Espacos) :-
      Espacos = [].
+
+% -----------------------------------------------------------------------
+%               numeros_comuns(Lst_Perms, Numeros_comuns)
+% numeros_comuns(Lst_Perms, Numeros_comuns), em que Lst_Perms eh uma
+% lista de permutaçoes, significa que Numeros_comuns eh uma lista de
+% pares (pos, numero), significando que todas as listas de Lst_Perms
+% contem o numero numero na posiçao pos.
+% -----------------------------------------------------------------------
+numeros_comuns([P | R], Numeros_comuns) :-
+     numeros_comuns_aux(P, 1, R, [], Numeros_comuns).
+
+numeros_comuns_aux([], _, _, Numeros_comuns, Numeros_comuns).
+
+numeros_comuns_aux([P | R], Pos, Resto, Acumulador, Numeros_comuns) :-
+%     primeiro_espaco(Numeros_comuns),
+     forall(member(Y, Resto), nth1(Pos, Y, P)),
+     Par = (Pos, P),
+     append(Acumulador, [Par], Nov_Ac),
+%     append(Numeros_comuns, [Par], Novo_comuns),
+     Prox_Pos is Pos + 1,
+     numeros_comuns_aux(R, Prox_Pos, Resto, Nov_Ac, Numeros_comuns).
+
+%numeros_comuns_aux([P | R], Pos, Resto, [[Par] | Numeros_comuns]) :-
+%     primeiro_espaco(Numeros_comuns),
+%     forall(member(Y, Resto), nth1(Pos, Y, P)),
+%     Par = (Pos, P),
+%     append(Numeros_comuns, [Par], Novo_comuns),
+%     Prox_Pos is Pos + 1,
+%     numeros_comuns_aux(R, Prox_Pos, Resto, Numeros_comuns).
+
+
+% se falhar um dos membros de L1
+numeros_comuns_aux([_ | R], Pos, Resto, Acumulador, Numeros_comuns) :-
+     Prox_Pos is Pos + 1,
+     numeros_comuns_aux(R, Prox_Pos, Resto, Acumulador, Numeros_comuns).
