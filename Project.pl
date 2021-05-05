@@ -1,4 +1,4 @@
- Nunes 199229
+% Gonçalo Nunes 199229
 % Projeto de LP 2020/2021
 % Solucionador de Puzzles Kakuro
 
@@ -10,7 +10,7 @@
 % placeholder
 % -----------------------------------------------------------------------
 
-%Construtor da estrutura espaco.
+% Construtor da estrutura espaco.
 faz_espaco(Soma, Lista, espaco(Soma, Lista)).
 
 % Seletores da estrutura espaco.
@@ -31,7 +31,6 @@ combinacoes_soma(N, Els, Soma, Combs) :-
      findall(X,
              (combinacao(N, Els, X), sum_list(X, Sum),
               Sum =:= Soma), Combs).
-
 
 % -----------------------------------------------------------------------
 %                  permutacoes_soma(N, Els, Soma, Perms)
@@ -92,9 +91,6 @@ espaco_fila_aux([], Esp, _, Soma, Vars, Conjunto) :-
      append(Conjunto, Esp_Atual, Resultado),
      member(Esp, Resultado).
 
-% Se Vars estiver vazio
-%espaco_fila_aux([], _, _, _, _, _) :-
-%     fail.
 
 % Fila horizontal
 valor_soma(Lista, H_V, Soma) :-
@@ -121,6 +117,7 @@ ultimo_espaco(Vars, Soma, [Esp_Atual]) :-
      length(Vars, N),
      N > 0,
      faz_espaco(Soma, Vars, Esp_Atual).
+
 % Unifica o Espaco Atual com a lista vazia
 ultimo_espaco(Vars, _, []) :-
      length(Vars, N),
@@ -139,6 +136,32 @@ espacos_fila(H_V, Fila, Espacos) :-
 espacos_fila(_, _, Espacos) :-
      Espacos = [].
 
+%-----------------------------------------------------------------------
+%                     espacos_puzzle(Puzzle, Espacos)
+% espacos_puzzle(Puzzle, Espacos), em que Puzzle eh um puzzle, significa
+% que Espacos eh a lista de espaços de Puzzle
+% -----------------------------------------------------------------------
+espacos_puzzle(Puzzle, Espacos) :-
+     bagof(X,
+             Fila^(member(Fila, Puzzle), espacos_fila(h, Fila, X)),
+             Horizontais),
+%     writeln(Horizontais),
+     mat_transposta(Puzzle, Transposta),
+     bagof(X,
+             Fila2^(member(Fila2, Transposta), espacos_fila(v, Fila2, X)),
+             Verticais),
+%     writeln('aaaaaaaaaaaaaaaaaaa'),
+%     writeln(Verticais),
+     append(Horizontais, Verticais, Resultado),
+%     writeln('TEEEEEEEEESTEEEEEEE'),
+     exclude(lista_vazia, Resultado, Espacos),
+%     writeln(Espacos).
+
+%espacos_puzzle(_, _).
+
+% Afirma se o termo que recebe eh uma lista vazia
+lista_vazia([]).
+
 % -----------------------------------------------------------------------
 %               numeros_comuns(Lst_Perms, Numeros_comuns)
 % numeros_comuns(Lst_Perms, Numeros_comuns), em que Lst_Perms eh uma
@@ -149,8 +172,13 @@ espacos_fila(_, _, Espacos) :-
 numeros_comuns([P | R], Numeros_comuns) :-
      numeros_comuns_aux(P, 1, R, [], Numeros_comuns).
 
+% Caso terminal da recursao, a chegada ao fim da lista de permutacoes.
+% O acumulador e os Numeros_comuns sao unificados
 numeros_comuns_aux([], _, _, Numeros_comuns, Numeros_comuns).
 
+% Verifica, recursivamente, se os membros de uma lista estao contidos
+% em todas as outras listas, na lista de listas Resto, e se tem o
+% mesmo indice em todas
 numeros_comuns_aux([P | R], Pos, Resto, Acumulador, Numeros_comuns) :-
 %     primeiro_espaco(Numeros_comuns),
      forall(member(Y, Resto), nth1(Pos, Y, P)),
@@ -169,7 +197,15 @@ numeros_comuns_aux([P | R], Pos, Resto, Acumulador, Numeros_comuns) :-
 %     numeros_comuns_aux(R, Prox_Pos, Resto, Numeros_comuns).
 
 
-% se falhar um dos membros de L1
+% Se o elemento nao estava em todas as sublistas de Resto e na mesma
+% posicao em todas
 numeros_comuns_aux([_ | R], Pos, Resto, Acumulador, Numeros_comuns) :-
      Prox_Pos is Pos + 1,
      numeros_comuns_aux(R, Prox_Pos, Resto, Acumulador, Numeros_comuns).
+
+%[P | R],
+%El = blah,
+%Pos = blah,
+%forall(member(Y, R), nth0(Pos, Y, El)).
+%findall(X, forall(member(Y, R), nth0(Pos, Y, El))
+%findall(X, (member(Y, R), nth0(X, Y, Var), Var =:= El
