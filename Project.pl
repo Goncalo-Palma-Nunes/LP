@@ -1,8 +1,8 @@
-% Gonçalo Nunes 199229
+% Goncalo Nunes 199229
 % Projeto de LP 2020/2021
 % Solucionador de Puzzles Kakuro
 
-:- [codigo_comum, puzzles_publicos].
+:- [codigo_comum].
 
 
 % -----------------------------------------------------------------------
@@ -11,7 +11,9 @@
 % -----------------------------------------------------------------------
 
 % Construtor da estrutura espaco.
-faz_espaco(Soma, Lista, espaco(Soma, Lista)).
+faz_espaco(Soma, Lista, espaco(Soma, Lista)) :-
+     length(Lista, N),
+     N > 0.
 
 % Seletores da estrutura espaco.
 % Afirma qual eh a Soma das celulas do espaco
@@ -36,7 +38,7 @@ combinacoes_soma(N, Els, Soma, Combs) :-
 %                  permutacoes_soma(N, Els, Soma, Perms)
 % permutacoes_soma(N, Els, Soma, Perms), em que N eh um inteiro, Els eh
 % uma lista de inteiros, e Soma eh um inteiro, significa que Perms eh a
-% lista ordenada cujos elementos sao as permutações das combinações N a
+% lista ordenada cujos elementos sao as permutacoes das combinacoes N a
 % N, dos elementos de Els cuja soma eh Soma.
 % -----------------------------------------------------------------------
 permutacoes_soma(N, Els, Soma, Perms) :-
@@ -49,7 +51,7 @@ permutacoes_soma(N, Els, Soma, Perms) :-
 % espaco_fila(Fila, Esp, H_V), em que Fila eh uma fila (linha ou coluna)
 % de um puzzle e H_V eh um dos atomos h ou v, conforme se trate de uma
 % fila horizontal ou vertical, respectivamente, significa que Esp eh um
-% espaco de Fila, tal como descrito na Seccao 2.1, no passo 1.
+% espaco de Fila.
 % -----------------------------------------------------------------------
 espaco_fila(Fila, Esp, H_V) :-
      espaco_fila_aux(Fila, Esp, H_V, 0, [], []).
@@ -83,10 +85,6 @@ espaco_fila_aux([P | R], Esp, H_V, Soma, Vars, Conjunto) :-
 % Caso terminal de espaco_fila_aux. Corresponde a variavel
 % Fila ser a lista vazia
 espaco_fila_aux([], Esp, _, Soma, Vars, Conjunto) :-
-%     length(Vars, N),  % Verifica se tem variaveis
-%     N =\= 0,          % para criar o espaco
-%     faz_espaco(Soma, Vars, Esp_Atual),
-%     append(Conjunto, [Esp_Atual], Resultado),
      ultimo_espaco(Vars, Soma, Esp_Atual),
      append(Conjunto, Esp_Atual, Resultado),
      member(Esp, Resultado).
@@ -126,12 +124,12 @@ ultimo_espaco(Vars, _, []) :-
 % -----------------------------------------------------------------------
 %                    espacos_fila(H_V, Fila, Espacos)
 % espacos_fila(H_V, Fila, Espacos), em que Fila eh uma fila (linha ou
-% coluna) de uma grelha e e H_V eh um dos atomos h ou v, significa que
-% Espacos eh a lista de todos os espaços de Fila, da esquerda para a
+% coluna) de um puzzle e H_V eh um dos atomos h ou v, significa que
+% Espacos eh a lista de todos os espacos de Fila, da esquerda para a
 % direita.
 % -----------------------------------------------------------------------
 espacos_fila(H_V, Fila, Espacos) :-
-     bagof(X, espaco_fila(Fila, X, H_V), Espacos), !.
+     bagof(X, espaco_fila(Fila, X, H_V), Espacos).
 
 espacos_fila(_, _, Espacos) :-
      Espacos = [].
@@ -139,25 +137,20 @@ espacos_fila(_, _, Espacos) :-
 %-----------------------------------------------------------------------
 %                     espacos_puzzle(Puzzle, Espacos)
 % espacos_puzzle(Puzzle, Espacos), em que Puzzle eh um puzzle, significa
-% que Espacos eh a lista de espaços de Puzzle
+% que Espacos eh a lista de espacos de Puzzle
 % -----------------------------------------------------------------------
 espacos_puzzle(Puzzle, Espacos) :-
      bagof(X,
              Fila^(member(Fila, Puzzle), espacos_fila(h, Fila, X)),
              Horizontais),
-%     writeln(Horizontais),
+
      mat_transposta(Puzzle, Transposta),
      bagof(X,
              Fila2^(member(Fila2, Transposta), espacos_fila(v, Fila2, X)),
              Verticais),
-%     writeln('aaaaaaaaaaaaaaaaaaa'),
-%     writeln(Verticais),
-     append(Horizontais, Verticais, Resultado),
-%     writeln('TEEEEEEEEESTEEEEEEE'),
-     exclude(lista_vazia, Resultado, Espacos),
-%     writeln(Espacos).
 
-%espacos_puzzle(_, _).
+     append(Horizontais, Verticais, Resultado),
+     exclude(lista_vazia, Resultado, Espacos).
 
 % Afirma se o termo que recebe eh uma lista vazia
 lista_vazia([]).
@@ -165,9 +158,9 @@ lista_vazia([]).
 % -----------------------------------------------------------------------
 %               numeros_comuns(Lst_Perms, Numeros_comuns)
 % numeros_comuns(Lst_Perms, Numeros_comuns), em que Lst_Perms eh uma
-% lista de permutaçoes, significa que Numeros_comuns eh uma lista de
+% lista de permutacoes, significa que Numeros_comuns eh uma lista de
 % pares (pos, numero), significando que todas as listas de Lst_Perms
-% contem o numero numero na posiçao pos.
+% contem o numero numero na posicao pos.
 % -----------------------------------------------------------------------
 numeros_comuns([P | R], Numeros_comuns) :-
      numeros_comuns_aux(P, 1, R, [], Numeros_comuns).
@@ -180,22 +173,11 @@ numeros_comuns_aux([], _, _, Numeros_comuns, Numeros_comuns).
 % em todas as outras listas, na lista de listas Resto, e se tem o
 % mesmo indice em todas
 numeros_comuns_aux([P | R], Pos, Resto, Acumulador, Numeros_comuns) :-
-%     primeiro_espaco(Numeros_comuns),
      forall(member(Y, Resto), nth1(Pos, Y, P)),
      Par = (Pos, P),
      append(Acumulador, [Par], Nov_Ac),
-%     append(Numeros_comuns, [Par], Novo_comuns),
      Prox_Pos is Pos + 1,
      numeros_comuns_aux(R, Prox_Pos, Resto, Nov_Ac, Numeros_comuns).
-
-%numeros_comuns_aux([P | R], Pos, Resto, [[Par] | Numeros_comuns]) :-
-%     primeiro_espaco(Numeros_comuns),
-%     forall(member(Y, Resto), nth1(Pos, Y, P)),
-%     Par = (Pos, P),
-%     append(Numeros_comuns, [Par], Novo_comuns),
-%     Prox_Pos is Pos + 1,
-%     numeros_comuns_aux(R, Prox_Pos, Resto, Numeros_comuns).
-
 
 % Se o elemento nao estava em todas as sublistas de Resto e na mesma
 % posicao em todas
@@ -203,9 +185,60 @@ numeros_comuns_aux([_ | R], Pos, Resto, Acumulador, Numeros_comuns) :-
      Prox_Pos is Pos + 1,
      numeros_comuns_aux(R, Prox_Pos, Resto, Acumulador, Numeros_comuns).
 
-%[P | R],
-%El = blah,
-%Pos = blah,
-%forall(member(Y, R), nth0(Pos, Y, El)).
-%findall(X, forall(member(Y, R), nth0(Pos, Y, El))
-%findall(X, (member(Y, R), nth0(X, Y, Var), Var =:= El
+% -----------------------------------------------------------------------
+%        espacos_com_posicoes_comuns(Espacos, Esp, Esps_com)
+% espacos_com_posicoes_comuns(Espacos, Esp, Esps_com), em que Espacos
+% eh uma lista de espacos e Esp eh um espaco, significa que Esps_com eh
+% a lista de espacos com variaveis em comum com Esp, exceptuando Esp.
+% -----------------------------------------------------------------------
+espacos_com_posicoes_comuns(Espacos, [Esp | _], Esps_com) :-
+     conteudo_espaco(Esp, Conteudo),
+     bagof(X,Z^Y^W^(member(Y, Conteudo), member(X, Espacos), member(W, X),
+                 conteudo_espaco(W, Z), membro(Y, Z)),
+           Temp),
+
+     exclude(=([Esp]), Temp, Temp2), % Retira o Espaco de "partida"
+     flatten(Temp2, Esps_com).
+
+% Afirma que nao encontrou espacos com variaveis em comum
+espacos_com_posicoes_comuns(_, _, Esps_com) :-
+     Esps_com = [].
+
+% Afirma que que nao eh membro da lista
+membro(_, []) :- fail.
+
+% Afirma que eh membro da lista, sem unificar
+membro(El, [P | _]) :-
+     El == P.
+
+membro(El, [P | R]) :-
+     El \== P,
+     membro(El, R).
+
+% -----------------------------------------------------------------------
+%             permutacoes_soma_espacos(Espacos, Perms_soma)
+% permutacoes_soma_espacos(Espacos, Perms_soma), em que Espacos eh uma
+% lista de espacos, significa que Perms_soma eh a lista de listas de 2
+% elementos, em que o primeiro elemento eh um espaco de Espacos e o
+% segundo eh a lista ordenada de permutacoes cuja soma eh igual a soma
+% do espaco.
+% -----------------------------------------------------------------------
+permutacoes_soma_espacos(Espacos, Perms_soma) :-
+     permutacoes_soma_espacos_aux(Espacos, [], Perms_soma).
+
+% Caso terminal. Unifica o acumulador com Perms_soma
+permutacoes_soma_espacos_aux([], Perms_soma, Perms_soma).
+
+% Faz a lista desejada com o primeiro espaco que encontra
+% e as permutacoes possiveis e repete para o resto dos espacos
+permutacoes_soma_espacos_aux([P | R], Acc, Perms_soma) :-
+     nth0(0, P, Esp), % Tem se de retirar o espaco da lista
+     conteudo_espaco(Esp, Conteudo),
+     soma_de(Esp, Soma),
+     length(Conteudo, N), % Num de elementos a combinar/permutar
+
+     permutacoes_soma(N, [1,2,3,4,5,6,7,8,9], Soma, Perms),
+     append([Esp], [Perms], Res),
+     append(Acc, [Res], Acc1),
+
+     permutacoes_soma_espacos_aux(R, Acc1, Perms_soma).
