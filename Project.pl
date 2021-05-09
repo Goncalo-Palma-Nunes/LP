@@ -1,7 +1,9 @@
 % Goncalo Nunes 199229
 % Projeto de LP 2020/2021
 % Solucionador de Puzzles Kakuro
-
+%
+%:- [codigo_comum, puzzles_publicos].
+%
 :- [codigo_comum].
 
 
@@ -79,12 +81,18 @@ espaco_fila_aux([P | R], Esp, H_V, Soma, Vars, Conjunto) :-
      N =\= 0,
      faz_espaco(Soma, Vars, Esp_Atual),
      primeiro_espaco(Conjunto), % Se for variavel, unifica com lista vazia
-     append([Esp_Atual], Conjunto, Atualizado),
-     espaco_fila_aux(R, Esp, H_V, Soma, [], Atualizado).
+     append(Conjunto, [Esp_Atual], Atualizado),
+     valor_soma(P, H_V, Nova_Soma),
+%     append([Esp_Atual], Conjunto, Atualizado),
+     espaco_fila_aux(R, Esp, H_V, Nova_Soma, [], Atualizado).
 
 % Caso terminal de espaco_fila_aux. Corresponde a variavel
 % Fila ser a lista vazia
 espaco_fila_aux([], Esp, _, Soma, Vars, Conjunto) :-
+%     length(Vars, N),  % Verifica se tem variaveis
+%     N =\= 0,          % para criar o espaco
+%     faz_espaco(Soma, Vars, Esp_Atual),
+%     append(Conjunto, [Esp_Atual], Resultado),
      ultimo_espaco(Vars, Soma, Esp_Atual),
      append(Conjunto, Esp_Atual, Resultado),
      member(Esp, Resultado).
@@ -125,11 +133,12 @@ ultimo_espaco(Vars, _, []) :-
 %                    espacos_fila(H_V, Fila, Espacos)
 % espacos_fila(H_V, Fila, Espacos), em que Fila eh uma fila (linha ou
 % coluna) de um puzzle e H_V eh um dos atomos h ou v, significa que
-% Espacos eh a lista de todos os espacos de Fila, da esquerda para a
+% Espacos eh a lista de todos os espaços de Fila, da esquerda para a
 % direita.
 % -----------------------------------------------------------------------
 espacos_fila(H_V, Fila, Espacos) :-
      bagof(X, espaco_fila(Fila, X, H_V), Espacos).
+%     bagof(X, espaco_fila(Fila, X, H_V), Espacos), !.
 
 espacos_fila(_, _, Espacos) :-
      Espacos = [].
@@ -137,7 +146,7 @@ espacos_fila(_, _, Espacos) :-
 %-----------------------------------------------------------------------
 %                     espacos_puzzle(Puzzle, Espacos)
 % espacos_puzzle(Puzzle, Espacos), em que Puzzle eh um puzzle, significa
-% que Espacos eh a lista de espacos de Puzzle
+% que Espacos eh a lista de espaços de Puzzle
 % -----------------------------------------------------------------------
 espacos_puzzle(Puzzle, Espacos) :-
      bagof(X,
@@ -150,7 +159,8 @@ espacos_puzzle(Puzzle, Espacos) :-
              Verticais),
 
      append(Horizontais, Verticais, Resultado),
-     exclude(lista_vazia, Resultado, Espacos).
+     exclude(lista_vazia, Resultado, Res2),
+     flatten(Res2, Espacos).
 
 % Afirma se o termo que recebe eh uma lista vazia
 lista_vazia([]).
@@ -173,11 +183,22 @@ numeros_comuns_aux([], _, _, Numeros_comuns, Numeros_comuns).
 % em todas as outras listas, na lista de listas Resto, e se tem o
 % mesmo indice em todas
 numeros_comuns_aux([P | R], Pos, Resto, Acumulador, Numeros_comuns) :-
+%     primeiro_espaco(Numeros_comuns),
      forall(member(Y, Resto), nth1(Pos, Y, P)),
      Par = (Pos, P),
      append(Acumulador, [Par], Nov_Ac),
+%     append(Numeros_comuns, [Par], Novo_comuns),
      Prox_Pos is Pos + 1,
      numeros_comuns_aux(R, Prox_Pos, Resto, Nov_Ac, Numeros_comuns).
+
+%numeros_comuns_aux([P | R], Pos, Resto, [[Par] | Numeros_comuns]) :-
+%     primeiro_espaco(Numeros_comuns),
+%     forall(member(Y, Resto), nth1(Pos, Y, P)),
+%     Par = (Pos, P),
+%     append(Numeros_comuns, [Par], Novo_comuns),
+%     Prox_Pos is Pos + 1,
+%     numeros_comuns_aux(R, Prox_Pos, Resto, Numeros_comuns).
+
 
 % Se o elemento nao estava em todas as sublistas de Resto e na mesma
 % posicao em todas
@@ -185,24 +206,43 @@ numeros_comuns_aux([_ | R], Pos, Resto, Acumulador, Numeros_comuns) :-
      Prox_Pos is Pos + 1,
      numeros_comuns_aux(R, Prox_Pos, Resto, Acumulador, Numeros_comuns).
 
+%[P | R],
+%El = blah,
+%Pos = blah,
+%forall(member(Y, R), nth0(Pos, Y, El)).
+%findall(X, forall(member(Y, R), nth0(Pos, Y, El))
+%findall(X, (member(Y, R), nth0(X, Y, Var), Var =:= El
+
 % -----------------------------------------------------------------------
 %        espacos_com_posicoes_comuns(Espacos, Esp, Esps_com)
 % espacos_com_posicoes_comuns(Espacos, Esp, Esps_com), em que Espacos
 % eh uma lista de espacos e Esp eh um espaco, significa que Esps_com eh
-% a lista de espacos com variaveis em comum com Esp, exceptuando Esp.
+% a lista de esp aços com variaveis em comum com Esp, exceptuando Esp.
 % -----------------------------------------------------------------------
-espacos_com_posicoes_comuns(Espacos, [Esp | _], Esps_com) :-
+espacos_com_posicoes_comuns(Espacos, Esp, Esps_com) :-
      conteudo_espaco(Esp, Conteudo),
-     bagof(X,Z^Y^W^(member(Y, Conteudo), member(X, Espacos), member(W, X),
-                 conteudo_espaco(W, Z), membro(Y, Z)),
-           Temp),
 
-     exclude(=([Esp]), Temp, Temp2), % Retira o Espaco de "partida"
-     flatten(Temp2, Esps_com).
+     bagof(X, Z^(member(X, Espacos), conteudo_espaco(X, Z),
+               pos_comuns_aux(Conteudo, Z)), Temp),
+
+     exclude(=(Esp), Temp, Temp2), % Retira o Espaco de "partida"
+     flatten(Temp2, Esps_com),!.
 
 % Afirma que nao encontrou espacos com variaveis em comum
 espacos_com_posicoes_comuns(_, _, Esps_com) :-
      Esps_com = [].
+
+% Afirma que nao ha posicoes comuns
+pos_comuns_aux([], _) :- fail.
+
+% Afirma que ha pelo menos uma posicao comum
+pos_comuns_aux([P | _], Cont2) :-
+     membro(P, Cont2),!.
+
+pos_comuns_aux([P|R], Cont2) :-
+     \+ membro(P, Cont2),
+     pos_comuns_aux(R, Cont2).
+
 
 % Afirma que que nao eh membro da lista
 membro(_, []) :- fail.
@@ -231,8 +271,8 @@ permutacoes_soma_espacos_aux([], Perms_soma, Perms_soma).
 
 % Faz a lista desejada com o primeiro espaco que encontra
 % e as permutacoes possiveis e repete para o resto dos espacos
-permutacoes_soma_espacos_aux([P | R], Acc, Perms_soma) :-
-     nth0(0, P, Esp), % Tem se de retirar o espaco da lista
+permutacoes_soma_espacos_aux([Esp | R], Acc, Perms_soma) :-
+%     nth0(0, P, Esp), % Tem se de retirar o espaco da lista
      conteudo_espaco(Esp, Conteudo),
      soma_de(Esp, Soma),
      length(Conteudo, N), % Num de elementos a combinar/permutar
