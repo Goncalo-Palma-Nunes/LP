@@ -1,17 +1,18 @@
 % Goncalo Nunes 199229
 % Projeto de LP 2020/2021
 % Solucionador de Puzzles Kakuro
-%
-%:- [codigo_comum, puzzles_publicos].
-%
+
 :- [codigo_comum].
 
 
 % -----------------------------------------------------------------------
 %                     Estrutura: espaco(Soma, Variaveis)
-% placeholder
+% espaco(Soma, Variaveis) eh uma estrutura, que representa um dado
+% espaco num puzzle Kakuro. A componente Soma do espaco corresponde a
+% soma de todos os elementos desse espaco, enquanto que Variaveis
+% corresponde a uma lista com as variaveis, numeros ou uma combinacao de
+% ambos, presentes em cada posicao do espaco.
 % -----------------------------------------------------------------------
-
 % Construtor da estrutura espaco.
 faz_espaco(Soma, Lista, espaco(Soma, Lista)) :-
      length(Lista, N),
@@ -25,7 +26,6 @@ soma_de(espaco(Soma, _), Soma).
 conteudo_espaco(espaco(_, Lista), Lista).
 
 % -----------------------------------------------------------------------
-%                   Combinacoes_soma(N, Els, Soma, Combs)
 % combinacoes_soma(N, Els, Soma, Combs), em que N eh um inteiro, Els eh
 % uma lista de inteiros, e Soma eh um inteiro, significa que Combs eh a
 % lista ordenada cujos elementos sao as combinacoes N a N, dos
@@ -37,7 +37,6 @@ combinacoes_soma(N, Els, Soma, Combs) :-
               Sum =:= Soma), Combs).
 
 % -----------------------------------------------------------------------
-%                  permutacoes_soma(N, Els, Soma, Perms)
 % permutacoes_soma(N, Els, Soma, Perms), em que N eh um inteiro, Els eh
 % uma lista de inteiros, e Soma eh um inteiro, significa que Perms eh a
 % lista ordenada cujos elementos sao as permutacoes das combinacoes N a
@@ -49,7 +48,6 @@ permutacoes_soma(N, Els, Soma, Perms) :-
      sort(Permutado,Perms).
 
 % -----------------------------------------------------------------------
-%                    espaco_fila(Fila, Esp, H_V)
 % espaco_fila(Fila, Esp, H_V), em que Fila eh uma fila (linha ou coluna)
 % de um puzzle e H_V eh um dos atomos h ou v, conforme se trate de uma
 % fila horizontal ou vertical, respectivamente, significa que Esp eh um
@@ -81,18 +79,14 @@ espaco_fila_aux([P | R], Esp, H_V, Soma, Vars, Conjunto) :-
      N =\= 0,
      faz_espaco(Soma, Vars, Esp_Atual),
      primeiro_espaco(Conjunto), % Se for variavel, unifica com lista vazia
+
      append(Conjunto, [Esp_Atual], Atualizado),
      valor_soma(P, H_V, Nova_Soma),
-%     append([Esp_Atual], Conjunto, Atualizado),
      espaco_fila_aux(R, Esp, H_V, Nova_Soma, [], Atualizado).
 
 % Caso terminal de espaco_fila_aux. Corresponde a variavel
 % Fila ser a lista vazia
 espaco_fila_aux([], Esp, _, Soma, Vars, Conjunto) :-
-%     length(Vars, N),  % Verifica se tem variaveis
-%     N =\= 0,          % para criar o espaco
-%     faz_espaco(Soma, Vars, Esp_Atual),
-%     append(Conjunto, [Esp_Atual], Resultado),
      ultimo_espaco(Vars, Soma, Esp_Atual),
      append(Conjunto, Esp_Atual, Resultado),
      member(Esp, Resultado).
@@ -130,7 +124,6 @@ ultimo_espaco(Vars, _, []) :-
      N =:= 0.
 
 % -----------------------------------------------------------------------
-%                    espacos_fila(H_V, Fila, Espacos)
 % espacos_fila(H_V, Fila, Espacos), em que Fila eh uma fila (linha ou
 % coluna) de um puzzle e H_V eh um dos atomos h ou v, significa que
 % Espacos eh a lista de todos os espacos de Fila, da esquerda para a
@@ -138,25 +131,23 @@ ultimo_espaco(Vars, _, []) :-
 % -----------------------------------------------------------------------
 espacos_fila(H_V, Fila, Espacos) :-
      bagof(X, espaco_fila(Fila, X, H_V), Espacos).
-%     bagof(X, espaco_fila(Fila, X, H_V), Espacos), !.
 
 espacos_fila(_, _, Espacos) :-
      Espacos = [].
 
 %-----------------------------------------------------------------------
-%                     espacos_puzzle(Puzzle, Espacos)
 % espacos_puzzle(Puzzle, Espacos), em que Puzzle eh um puzzle, significa
 % que Espacos eh a lista de espacos de Puzzle
 % -----------------------------------------------------------------------
 espacos_puzzle(Puzzle, Espacos) :-
      bagof(X,
              Fila^(member(Fila, Puzzle), espacos_fila(h, Fila, X)),
-             Horizontais),
+             Horizontais), % Lista de espacos nas filas horizontais
 
      mat_transposta(Puzzle, Transposta),
      bagof(X,
              Fila2^(member(Fila2, Transposta), espacos_fila(v, Fila2, X)),
-             Verticais),
+             Verticais), % Lista de espacos nas colunas
 
      append(Horizontais, Verticais, Resultado),
      exclude(lista_vazia, Resultado, Res2),
@@ -166,7 +157,6 @@ espacos_puzzle(Puzzle, Espacos) :-
 lista_vazia([]).
 
 % -----------------------------------------------------------------------
-%               numeros_comuns(Lst_Perms, Numeros_comuns)
 % numeros_comuns(Lst_Perms, Numeros_comuns), em que Lst_Perms eh uma
 % lista de permutacoes, significa que Numeros_comuns eh uma lista de
 % pares (pos, numero), significando que todas as listas de Lst_Perms
@@ -183,21 +173,11 @@ numeros_comuns_aux([], _, _, Numeros_comuns, Numeros_comuns).
 % em todas as outras listas, na lista de listas Resto, e se tem o
 % mesmo indice em todas
 numeros_comuns_aux([P | R], Pos, Resto, Acumulador, Numeros_comuns) :-
-%     primeiro_espaco(Numeros_comuns),
      forall(member(Y, Resto), nth1(Pos, Y, P)),
      Par = (Pos, P),
      append(Acumulador, [Par], Nov_Ac),
-%     append(Numeros_comuns, [Par], Novo_comuns),
      Prox_Pos is Pos + 1,
      numeros_comuns_aux(R, Prox_Pos, Resto, Nov_Ac, Numeros_comuns).
-
-%numeros_comuns_aux([P | R], Pos, Resto, [[Par] | Numeros_comuns]) :-
-%     primeiro_espaco(Numeros_comuns),
-%     forall(member(Y, Resto), nth1(Pos, Y, P)),
-%     Par = (Pos, P),
-%     append(Numeros_comuns, [Par], Novo_comuns),
-%     Prox_Pos is Pos + 1,
-%     numeros_comuns_aux(R, Prox_Pos, Resto, Numeros_comuns).
 
 
 % Se o elemento nao estava em todas as sublistas de Resto e na mesma
@@ -206,16 +186,7 @@ numeros_comuns_aux([_ | R], Pos, Resto, Acumulador, Numeros_comuns) :-
      Prox_Pos is Pos + 1,
      numeros_comuns_aux(R, Prox_Pos, Resto, Acumulador, Numeros_comuns).
 
-%ahahsadasfasd
-%[P | R],
-%El = blah,
-%Pos = blah,
-%forall(member(Y, R), nth0(Pos, Y, El)).
-%findall(X, forall(member(Y, R), nth0(Pos, Y, El))
-%findall(X, (member(Y, R), nth0(X, Y, Var), Var =:= El
-
 % -----------------------------------------------------------------------
-%        espacos_com_posicoes_comuns(Espacos, Esp, Esps_com)
 % espacos_com_posicoes_comuns(Espacos, Esp, Esps_com), em que Espacos
 % eh uma lista de espacos e Esp eh um espaco, significa que Esps_com eh
 % a lista de espacos com variaveis em comum com Esp, exceptuando Esp.
@@ -226,11 +197,6 @@ espacos_com_posicoes_comuns(Espacos, Esp, Esps_com) :-
      bagof(X, Z^(member(X, Esps), conteudo_espaco(X, Z),
                pos_comuns_aux(Conteudo, Z)), Esps_com),!.
 
-%%%%%%%     Temp = [_ | Esps_com], !.
-%%%%%%%% exclude(=(Esp), Temp, Temp2), % Retira o Espaco de "partida"
-%     flatten(Temp, Esps_com),!.
-%%%     writeln(Esps_com),
-%%%     writeln('aaaaaaaa'),!.
 
 % Afirma que nao encontrou espacos com variaveis em comum
 espacos_com_posicoes_comuns(_, _, Esps_com) :-
@@ -260,7 +226,6 @@ membro(El, [P | R]) :-
      membro(El, R).
 
 % -----------------------------------------------------------------------
-%             permutacoes_soma_espacos(Espacos, Perms_soma)
 % permutacoes_soma_espacos(Espacos, Perms_soma), em que Espacos eh uma
 % lista de espacos, significa que Perms_soma eh a lista de listas de 2
 % elementos, em que o primeiro elemento eh um espaco de Espacos e o
@@ -276,7 +241,6 @@ permutacoes_soma_espacos_aux([], Perms_soma, Perms_soma).
 % Faz a lista desejada com o primeiro espaco que encontra
 % e as permutacoes possiveis e repete para o resto dos espacos
 permutacoes_soma_espacos_aux([Esp | R], Acc, Perms_soma) :-
-%     nth0(0, P, Esp), % Tem se de retirar o espaco da lista
      conteudo_espaco(Esp, Conteudo),
      soma_de(Esp, Soma),
      length(Conteudo, N), % Num de elementos a combinar/permutar
@@ -297,22 +261,18 @@ permutacoes_soma_espacos_aux([Esp | R], Acc, Perms_soma) :-
 % -----------------------------------------------------------------------
 permutacao_possivel_espaco(Perm, Esp, Espacos, _) :-
     espacos_com_posicoes_comuns(Espacos, Esp, Esps_com),
-%%%    writeln('BASSSSSSSSSSSSSSSSSSSS'),writeln(Esps_com),
-%    writeln('AAAAAAAAAAAAAA'),
     permutacoes_soma_espacos(Esps_com, Perms_comuns),
-%%    writeln('BBBBBBBBBBBBBBBBBBB'),
-    permutacoes_do_espaco(Esp, Perms),
-%%    writeln('CCCCCCCCCCCCCCCCCCCC'),
-%%%%    write('O espaco eh '), writeln(Esp),
-%%%%    write('As Perms sao '), writeln(Perms),
-%%%%    write('As Perms_comuns sao '), writeln(Perms_comuns),
+    % Obtem-se as permutacoes dos espacos comuns
+
+    permutacoes_do_espaco(Esp, Perms), % Permutacoes do espaco que queremos
     percorre_permutacoes(Perms, Perm, Perms_comuns).
-%%%%    writeln('DDDDDDDDDDDDDDDDDDD').
 
-%percorre_permutacoes(Perms, Perm, Perms_soma).
 
+% Afirma que nao houve permutacoes validas
 percorre_permutacoes([], _, _) :- fail.
 
+% Verifica se uma dada permutacao do espaco eh valida,
+% tendo em conta os espacos com posicoes comuns
 percorre_permutacoes([P | _], Perm, Perms_soma) :-
     perm_valida(P, Perms_soma, 0),
     Perm = P.
@@ -321,13 +281,9 @@ percorre_permutacoes([_ | R], Perm, Perms_soma) :-
      percorre_permutacoes(R, Perm, Perms_soma).
 
 
-%perm_valida(Lst, Perms_soma) :-
-%     length(Lst, N),
-%     length(Perms_soma, N2),
-%     N =< N2,
-%     forall(member(Num, Lst),
-%            percorre_espacos_comuns(Num, Perms_soma, 0)).
+% Afirma que a permutacao eh valida
 perm_valida([], _, _).
+
 
 perm_valida([Num | R], Perms_soma, Pos) :-
      percorre_espacos_comuns(Num, Perms_soma, Pos),
@@ -340,7 +296,6 @@ percorre_espacos_comuns(_, [], _) :- fail.
 
 percorre_espacos_comuns(Num, Perms_soma, Pos) :-
      nth0(Pos, Perms_soma, Esp),
-%     nth0(Pos, Esp, Permutacoes),
      nth0(1, Esp, Permutacoes),
      percorre_perms_aux(Num, Permutacoes), !.
 
@@ -349,7 +304,6 @@ percorre_espacos_comuns(Num, Perms_soma, Pos) :-
 percorre_perms_aux(_, []) :- fail.
 
 percorre_perms_aux(Num, [P | _]) :-
-%%%     writeln('muita cena'),
      member(Num, P),!.
 
 percorre_perms_aux(Num, [P | R]) :-
@@ -374,13 +328,10 @@ permutacoes_do_espaco(Esp, Perms) :-
 % de Esp e o segundo eh a lista ordenada de permutacoes possiveis para o
 % espaco Esp
 % -----------------------------------------------------------------------
-
 permutacoes_possiveis_espaco(Espacos, Perms_soma, Esp, Perms_poss) :-
      findall(Perm,
              permutacao_possivel_espaco(Perm, Esp, Espacos, Perms_soma),
              Perms),
-%%%%     writeln('AAAAAAAAAAAAAA'),
-%%%%     writeln(Perms),
      conteudo_espaco(Esp, Conteudo),
      append([Conteudo], [Perms], Perms_poss).
 
@@ -400,84 +351,59 @@ permutacoes_possiveis_espacos(Espacos, Perms_poss_esps) :-
 % espaco numeros comuns a todas as permutacoes possiveis para esse
 % espaco
 % -----------------------------------------------------------------------
-atribui_comuns(Perms_Possiveis) :-
-%     maplist(writeln, Perms_Possiveis),
-     bagof(Esp, Y^(member(Y, Perms_Possiveis), nth0(0, Y, Esp)), Esps),
-%     maplist(writeln, Esps),
-     lista_comuns(Perms_Possiveis, [], Lista_nums_comuns),
-%     writeln('RIIIIIIIIIIIIGHT HERE'),
-%%%     writeln('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
-%%%     writeln(Lista_nums_comuns),
-%     maplist(writeln, Lista_nums_comuns),
-     atribui_aux(Esps, Lista_nums_comuns), !.
+atribui_comuns([]).
 
-lista_comuns([], Lista_nums_comuns, Lista_nums_comuns).
-%     writeln(Lista_nums_comuns).
-%      maplist(writeln, Lista_nums_comuns).
-%     exclude(lista_vazia, Acc, Lista_nums_comuns).
+atribui_comuns([P | R]) :-
+     P = [Esp | Resto],
+     nth1(1, Resto, Perms),
+     numeros_comuns(Perms, Numeros_Comuns),
+     atribui_aux(Esp, Numeros_Comuns),
+     atribui_comuns(R), !.
 
-lista_comuns([P | R], Acc, Lista_nums_comuns) :-
-     nth0(1, P, Perms), % Retira a lista de permutacoes
-%%%%     writeln(P),
-%%%%     write('Perms sao '), writeln(Perms),
-     numeros_comuns(Perms, Res),
-%%%%     writeln(Res),
-%     write('Acc eh '), writeln(Acc),
-%     write('Res eh '), writeln(Res),
-     append([Res], Acc, Acc1),
-%     write('Novo Acc ----------------------------- '),
-%     writeln(Lista_nums_comuns),
-     lista_comuns(R, Acc1, Lista_nums_comuns).
+% Afirma que ja nao ha mais nada a unificar
+atribui_aux(_, []).
 
-atribui_aux([], []).
-
-atribui_aux([Esp | R1], [Nums_comuns | R2]) :-
-%%%%     write('O espaco eh '),
-%%%%     write(Esp),
-%%%%     write(' e os numeros comuns sao '), writeln(Nums_comuns),
-     unifica_comuns(Esp, Nums_comuns),
-%%     %%write('Agora o espaco eh '), write(Esp), write(' E os nums sao
-%%     '),
-%%%%     writeln(Nums_comuns),
-     atribui_aux(R1, R2).
-
-
-unifica_comuns(_, []).
-
-unifica_comuns(Esp, [(Ind, Num) | R]) :-
-%     nth0(Ind, Esp, Num),
-%     writeln('PRETTTTTTTTYYYYYYYYY PLEASE'),
-     nth1(Ind, Esp, Var),
-     Var = Num,
-%     write('Esp ------- '), writeln(Esp),
-     unifica_comuns(Esp, R).
-
+atribui_aux(Esp, [Par | R]) :-
+      Par = (Ind, Num),    % Unifica a variavel no indice Ind
+      nth1(Ind, Esp, Num), % de Esp, com o numero Num
+      atribui_aux(Esp, R).
 
 % ------------------------------------------------------------------------
 % escolhe_menos_alternativas(Perms_Possiveis, Escolha), em que
 % Perms_Possiveis eh uma lista de permutacoes possiveis, significa que
 % Escolha eh o elemento de Perms_Possiveis, com o menor numero de
 % permutacoes. Se todos os espacos em Perms_Possiveis tiverem
-% associadas listas de permutacoes unitarias, o predicado deve devolver
+% associadas listas de permutacoes unitarias, o predicado devolveve
 % "falso".
 % ------------------------------------------------------------------------
-
 escolhe_menos_alternativas(Perms_possiveis, Escolha) :-
-     escolhe_menos_aux(Perms_possiveis, _, Escolha),!.
+     escolhe_menos_aux(Perms_possiveis, _, Escolha), !,
+     \+ var(Escolha). % So eh verdade se encontrar uma Escolha
 
 escolhe_menos_aux([], Escolha, Escolha).
 
 escolhe_menos_aux([P | R], Atual_Escolha, Escolha) :-
-     length(P, N),
-     N > 2, % Se nao for uma lista de permutacoes unitaria
-     escolha_preferivel(P, Atual_Escolha),
+     nth0(1, P, Permutacoes), % Obtem a lista de permutacoes do espaco
+     length(Permutacoes, N),
+     N >= 2, % Se nao for uma lista de permutacoes unitaria
+     escolha_preferivel(Permutacoes, Atual_Escolha),
      escolhe_menos_aux(R, P, Escolha).
 
+% Se nao for uma lista de permutacoes unitarias, mas
+% tambem nao for uma escolha preferivel
 escolhe_menos_aux([P | R], Atual_Escolha, Escolha) :-
-     length(P, N),
-     N =< 2,
+     nth0(1, P, Permutacoes),
+     length(Permutacoes, N),
+     N >= 2,
+     \+ escolha_preferivel(Permutacoes, Atual_Escolha),
      escolhe_menos_aux(R, Atual_Escolha, Escolha).
 
+
+escolhe_menos_aux([P | R], Atual_Escolha, Escolha) :-
+     nth0(1, P, Permutacoes),
+     length(Permutacoes, N),
+     N < 2,
+     escolhe_menos_aux(R, Atual_Escolha, Escolha).
 
 
 % Afirma que ainda nao houve escolha feita, entao
@@ -488,6 +414,73 @@ escolha_preferivel(_, Atual_Escolha) :-
 % Afirma que a nova escolha eh preferivel, por ter menos
 % permutacoes possiveis
 escolha_preferivel(P, Atual_Escolha) :-
-     length(Atual_Escolha, N1),
+     nth0(1, Atual_Escolha, Permutacoes_Escolha),
+     length(Permutacoes_Escolha, N1),
      length(P, N2),
      N2 < N1.
+
+% ------------------------------------------------------------------------
+% experimenta_perm(Escolha, Perms_Possiveis, Novas_Perms_Possiveis), em
+% que Perms_Possiveis eh uma lista de permutacoes possiveis, e Escolha
+% eh um dos seus elementos (como obtido no predicado
+% escolhe_menos_alternativas/2), segue os seguintes passos:
+%     1. Sendo Esp e Lst_Perms o espaco e a lista de permutacoes de
+%     Escolha, respectivamente, escolhe uma permutacao de Lst_Perms,
+%     Perm.
+%
+%     2. Unifica Esp com Perm.
+%
+%     3. Novas_Perms_Possiveis eh o resultado de substituir, em
+%     Perms_Possiveis, o elemento Escolha pelo elemento [Esp, [Perm]].
+% ------------------------------------------------------------------------
+experimenta_perm(Escolha, Perms_Possiveis,
+                           Novas_Perms_Possiveis) :-
+     nth1(1, Escolha, Esp),
+     nth1(2, Escolha, Lst_Perms),
+     member(Perm, Lst_Perms),
+     Esp = Perm,
+     select(Escolha, Perms_Possiveis, [Esp, [Perm]], Novas_Perms_Possiveis),
+     !.
+
+% ------------------------------------------------------------------------
+% retira_impossiveis(Perms_Possiveis, Novas_Perms_Possiveis), em
+% que Perms_Possiveis eh uma lista de permutacoes possiveis, significa
+% que Novas_Perms_Possiveis eh o resultado de tirar permutacoes
+% impossiveis de Perms_Possiveis
+% ------------------------------------------------------------------------
+retira_impossiveis(Perms_Possiveis, Novas_Perms_Possiveis) :-
+     retira_aux(Perms_Possiveis, [], Novas_Perms_Possiveis), !.
+
+retira_aux([], Novas_Perms, Novas_Perms).
+
+retira_aux([P | R], Acc, Novas_Perms_Poss) :-
+     P = [Esp | Resto],
+     nth0(0, Resto, Perms), % Retira uma "camada" de listas
+     bagof(Perm, (member(Perm, Perms), subsumes_term(Esp, Perm)),
+           Novas_Perms),
+
+     \+ lista_vazia(Novas_Perms),
+     \+ subsumes_term(Perms, Novas_Perms), % Se houve alteracao
+     append([Esp], [Novas_Perms], Res),
+     append(Acc, [Res], Novo_Acc),
+     retira_aux(R, Novo_Acc, Novas_Perms_Poss).
+
+retira_aux([P | R], Acc, Novas_Perms_Poss) :-
+     append(Acc, [P], Novo_Acc),
+     retira_aux(R, Novo_Acc, Novas_Perms_Poss).
+
+
+% ------------------------------------------------------------------------
+% simplifica(Perms_Possiveis, Novas_Perms_Possiveis), em que
+% Perms_Possiveis eh uma lista de permutacoes possiveis, significa que
+% Novas_Perms_Possiveis eh o resultado de simplificar Perms_Possiveis
+% ------------------------------------------------------------------------
+simplifica(Perms_Possiveis, Novas_Perms_Possiveis) :-
+     atribui_comuns(Perms_Possiveis),
+     retira_impossiveis(Perms_Possiveis, Novas_Perms),
+     Novas_Perms \== Perms_Possiveis, % Enquanto houver mudancas
+     simplifica(Novas_Perms, Novas_Perms_Possiveis).
+
+
+% Apos nao dar para simplificar mais, unifica com Novas_Perms_Possiveis
+simplifica(Novas_Perms_Possiveis, Novas_Perms_Possiveis).
